@@ -1,0 +1,197 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(pacman)
+pacman::p_load(rio, #Importacion y exportacion de datos.
+               here, #Simplifica la construcción de rutas de archivos.
+               skimr, #Proporciona resumenes de datos rápidos.
+               tidyverse, #Paquetes de CIENCIAS DE DATOS (incluye dplyr, ggplot2 y tidyr) 
+               gtsummary, #Crea tablas de resumen.
+               rstatix, #Análisis estadísticos.
+               janitor, #Facilita la limpieza de datos.
+               scales, #Visualización de datos.
+               flextable, #Creacion de tablas y reportes.
+               epirhandbook #Herramientas de epirhandbook
+               )
+ 
+# importar el archivo directamente desde Github
+cleaning_dict <- import(
+  "https://github.com/appliedepi/epirhandbook_eng/raw/master/data/case_linelists/cleaning_dict.csv"
+  )
+```
+
+
+```{r entrada, message=TRUE, warning=TRUE, include=FALSE, paged.print=TRUE}
+library(pacman)
+pacman::p_load(rio,
+               here,
+               skimr,
+               tidyverse,
+               gtsummary,
+               rstatix,
+               janitor,
+               scales,
+               flextable)
+```
+
+```{r message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+linelist <- import("linelist_cleaned.rds")
+```
+El t-test es una ***herramienta estadística*** utilizada para comparar las medias de dos grupos y determinar si existen diferencias significativas entre ellos. Se utiliza comúnmente en la investigación científica y en análisis de datos para responder preguntas como si hay diferencias significativas entre dos tratamientos, dos poblaciones, dos grupos demográficos, etc.
+
+```{r}
+linelist 
+  t.test(age_years~gender, data=linelist)
+```
+***EL TEST T***
+El t-test de Welch para dos muestras compara las medias de dos grupos independientes, en este caso, los grupos de género femenino (f) y masculino (m) en términos de la variable "age_years" (años de edad). 
+
+Los resultados muestran que hay una diferencia significativa en las edades entre los dos grupos (t = -21.344, df = 4902.3, p-value < 2.2e-16). 
+
+#***La hipótesis alternativa sugiere que la diferencia real entre las medias de los grupos no es igual a cero.***
+
+El intervalo de confianza del 95% para esta diferencia de medias es entre -7.571920 y -6.297975, lo que sugiere que la media de edad en el grupo femenino es significativamente menor que la del grupo masculino. Las estimaciones muestran que la media de edad en el grupo femenino es aproximadamente 12.60207 años, mientras que en el grupo masculino es aproximadamente 19.53701 años.
+
+Alpha prefijada se refiere al nivel maximo de errores de permitidos en la investigacion, por lo general es 10, 5, 1%
+
+```{r}
+ggplot(linelist, aes(x = gender, y = age_years)) +
+  geom_boxplot() +  
+  labs(x = "Género", y = "Edad", title = "Distribución de edades por género")  
+```
+
+```{r}
+grafico <- ggplot(linelist, aes(x=age_years, fill=gender)) +
+geom_histogram(binwidth = 1, alpha = 0.5, position = 'identity') +
+labs(x = "Edad (años)", y = "Frecuencia", title = "Gráfico de frecuencias de edad por género") +
+theme_minimal()
+
+
+print(grafico)
+```
+```{r}
+summary_por_genero <- linelist %>%
+  group_by(gender) %>%
+  summarize(
+    mean_age = mean(age_years),
+    median_age = median(age_years),
+    min_age = min(age_years),
+    max_age = max(age_years)
+  )
+print(summary_por_genero)
+```
+# **TENEMOS QUE TENER EN CUENTA QUE NO SIEMPRE UN GRÁFICO ES UNA PRUEBA FIABLE, HAY QUE REALIZAR LOS TEST NECESARIOS. EN ESTE CASO EL TEST T**
+
+$$ H_0: \text{Si la media de una muestra es significativamente diferente de algún valor específico.} $$
+$$ H_1: H_O \ Falsa $$
+$$Con\ \alpha = 0.5\% $$
+```{r}
+t.test(linelist$age_years, mu = 45)
+```
+
+Este código realiza un "t-test de una muestra" en R, específicamente para la variable "age_years" en el conjunto de datos "linelist". Aquí está la interpretación de la información:
+
+Hipótesis Nula (H0): La hipótesis nula establece que la media poblacional de la variable "age_years" es igual a 45 años.
+
+Estadística de Prueba (t): La estadística de prueba t es -174.61.
+
+Grados de libertad (df): Hay 5801 grados de libertad asociados con la prueba.
+
+Valor p (p-value): El valor p es menor que 2.2e-16, lo que indica una muy fuerte evidencia en contra de la hipótesis nula. En otras palabras, hay evidencia significativa para rechazar la idea de que la media de "age_years" es igual a 45 años.
+
+Intervalo de Confianza (95%): El intervalo de confianza del 95% para la diferencia entre la media de la muestra y la media poblacional hipotética de 45 años es de 15.69293 a 16.34369.
+
+Estimación de la Media de la Muestra: La media de la muestra para la variable "age_years" es aproximadamente 16.01831 años.
+
+En resumen, basado en los resultados del test t, hay suficiente evidencia para concluir que la media de la variable "age_years" en la población no es igual a 45 años.
+
+p(y) = \frac{1}{P()}
+```{r}
+age_by_outcome <- linelist %>% 
+  tabyl(age_cat, outcome, show_na = FALSE)
+chisq.test(age_by_outcome)
+```
+
+El test Chi-cuadrado de Pearson es una prueba estadística utilizada para determinar si existe una asociación entre dos variables categóricas. En otras palabras, evalúa si hay una relación significativa entre las categorías de dos variables. Por ejemplo, podría usarse para analizar si hay una asociación entre el resultado de un evento (como "éxito" o "fracaso") y la edad de los participantes.
+
+El valor X-squared (chi-cuadrado) calculado indica la magnitud de la discrepancia entre las frecuencias observadas y las esperadas bajo la hipótesis nula de independencia entre las variables. Cuanto mayor sea el valor de X-squared, mayor será la discrepancia y, por lo tanto, menos probable que los resultados se deban al azar.
+
+El "df" (grados de libertad) representa el número de categorías menos uno en la tabla de contingencia (tabla de frecuencias cruzadas) de las dos variables. El p-value indica la probabilidad de observar un valor de X-squared al menos tan extremo como el valor observado bajo la hipótesis nula de independencia. Si el p-value es menor que un nivel de significancia predeterminado (generalmente 0.05), se rechaza la hipótesis nula y se concluye que existe una asociación significativa entre las variables.
+
+En el resumen proporcionado, el valor de X-squared es 6.4931, con 7 grados de libertad y un p-value de 0.4835
+
+
+__________________________________________________________________________________________________________
+
+Imagina que tienes una tabla con dos cosas que quieres comparar, como el color favorito de las personas y si les gusta el fútbol o no. ¿Te imaginas una tabla así? En una columna tienes los colores favoritos, como "rojo", "azul" o "verde", y en la otra columna tienes si a las personas les gusta el fútbol o no, como "sí" o "no".
+
+El test Chi-cuadrado de Pearson nos ayuda a responder la pregunta: ¿hay alguna relación entre el color favorito de las personas y si les gusta el fútbol o no? Para entenderlo, imagina que tienes una bolsa con bolitas de colores. Si mezclas todas las bolitas y sacas una, la probabilidad de que sea de un color específico es la misma para todos los colores, ¿verdad? Eso es lo que esperaríamos si no hubiera ninguna relación entre el color favorito y si les gusta el fútbol o no.
+
+El valor X-squared (chi-cuadrado) nos dice si lo que vemos en la realidad es lo mismo que esperaríamos si no hubiera ninguna relación. Si el valor X-squared es grande, significa que lo que vemos en la realidad es muy diferente de lo que esperaríamos si no hubiera relación. Y si el valor es pequeño, significa que lo que vemos es similar a lo que esperaríamos si no hubiera relación.
+
+En el resumen, nos dicen que el valor de X-squared es 6.4931. Eso nos dice que lo que vemos en la realidad es un poco diferente de lo que esperaríamos si no hubiera relación, pero no lo suficiente como para decir que hay una relación definitiva. El p-value, que es 0.4835, nos dice que hay una buena probabilidad de que la diferencia que vemos sea solo por casualidad, y no porque haya realmente una relación entre el color favorito y si les gusta el fútbol o no.
+
+Así que en resumen, el test Chi-cuadrado de Pearson nos ayuda a entender si hay alguna relación entre dos cosas que estamos mirando, como el color favorito de las personas y si les gusta el fútbol o no.
+
+```{r}
+# Tomar una muestra aleatoria de tamaño 5000 del conjunto de datos linelist
+set.seed(42)  
+sample_data <- linelist[sample(nrow(linelist), 5000), ]
+
+shapiro_test_result <- shapiro.test(sample_data$age_years)
+print(shapiro_test_result)
+
+ggplot(sample_data, aes(sample = age_years)) +
+  stat_qq() +
+  stat_qq_line()
+
+```
+
+```{r}
+ggplot(linelist, aes(sample=age_years))+
+  stat_qq()+
+  stat_qq_line()
+```
+ ###QQ (Quantile-Quantile)###
+ La linea vertical refleja la normalidad.
+ 
+ El gráfico QQ, o Quantile-Quantile plot, es una herramienta visual que nos ayuda a comparar la distribución de nuestros datos con una distribución teórica, como la distribución normal.
+
+En el eje x del gráfico, tenemos los cuantiles teóricos de la distribución de referencia, que en este caso es la distribución normal estándar. Estos cuantiles representan los valores que esperaríamos ver si nuestros datos se ajustaran perfectamente a una distribución normal.
+
+En el eje y, tenemos los cuantiles observados de nuestros datos. Estos son los valores reales que hemos observado en nuestra muestra.
+
+Si nuestros datos se ajustan bien a una distribución normal, los puntos en el gráfico QQ deberían aproximarse a una línea diagonal. Esto significa que los cuantiles observados son muy similares a los cuantiles teóricos de la distribución normal.
+
+Si los puntos se desvían significativamente de la línea diagonal, eso nos indica que hay diferencias entre la distribución de nuestros datos y la distribución normal. Esto podría sugerir que nuestros datos no siguen una distribución normal.
+
+Por lo tanto, el gráfico QQ nos proporciona una forma rápida y visual de evaluar si nuestros datos se ajustan a una distribución normal o no. Es una herramienta útil en el análisis estadístico y nos ayuda a tomar decisiones informadas sobre qué pruebas estadísticas podemos aplicar a nuestros datos..
+ 
+```{r}
+wilcox.test (age_years ~ outcome, data = linelist)
+```
+***TEST DE WILCOXON***
+Imagina que tienes dos grupos de amigos y quieres saber si uno de los grupos es generalmente más alto que el otro. Ahora, no quieres preguntarles a todos cuánto miden, eso llevaría mucho tiempo, ¿verdad? Así que, en lugar de eso, solo preguntas a un par de amigos de cada grupo y comparas sus alturas.
+
+El Test de Wilcoxon es un poco como eso, pero para datos. En lugar de alturas, podrían ser cosas como "¿cuántos dulces come cada niño por semana?" o "¿cuánto tiempo pasan los niños jugando videojuegos?". El test compara los números de los dos grupos y te dice si hay una diferencia grande y significativa entre ellos.
+
+Ahora, ¿por qué no solo usamos el promedio como hacemos con la mayoría de las cosas? Bueno, a veces, los datos no se comportan como esperamos, especialmente si hay muchos números muy altos o muy bajos en un grupo. El Test de Wilcoxon no se preocupa por eso, solo mira los números y ve si hay una diferencia grande sin importar demasiado si algunos son mucho más grandes que otros.
+
+Entonces, en resumen, el Test de Wilcoxon es como comparar grupos de amigos para ver quién come más dulces o juega más videojuegos, pero con números en lugar de personas. Ayuda a ver si hay una diferencia grande y significativa entre los grupos. ¡Es una manera genial de entender quién es diferente sin tener que preguntarle a cada persona del grupo!
+
+```{r}
+t
+```
+
+
+
+
+
+
+
+
