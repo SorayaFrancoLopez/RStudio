@@ -170,22 +170,28 @@ Si nuestros datos se ajustan bien a una distribución normal, los puntos en el g
 
 Si los puntos se desvían significativamente de la línea diagonal, eso nos indica que hay diferencias entre la distribución de nuestros datos y la distribución normal. Esto podría sugerir que nuestros datos no siguen una distribución normal.
 
-Por lo tanto, el gráfico QQ nos proporciona una forma rápida y visual de evaluar si nuestros datos se ajustan a una distribución normal o no. Es una herramienta útil en el análisis estadístico y nos ayuda a tomar decisiones informadas sobre qué pruebas estadísticas podemos aplicar a nuestros datos.
+Por lo tanto, el gráfico QQ nos proporciona una forma rápida y visual de evaluar si nuestros datos se ajustan a una distribución normal o no. Es una herramienta útil en el análisis estadístico y nos ayuda a tomar decisiones informadas sobre qué pruebas estadísticas podemos aplicar a nuestros datos..
  
 ```{r}
-media_muestra <- mean(linelist$age_years, na.rm = TRUE)
-desviacion_estandar <- sd(linelist$age_years, na.rm = TRUE)
-
-ggplot(linelist, aes(sample=age_years))+
-  stat_qq()+
-  stat_qq_line()+
-  geom_abline(intercept = media_muestra, slope = 1, lintype="dashed", color="red")+
-  geom_segment(aes(x=quantile(linelist$age_years, 0.025, na.rm = TRUE), y=media_muestra -1.96* desviacion_estandar,
-                   xend=quantile(linelist$age_year, 0975, na.rm = TRUE), yend = media_muestra +1.96*desviacion_estandar),
-               linetype = "dashed", color="red")+
-  labs(x="Cuantiles teóricos", y= "Valores de la muestra", title = "Diagrama Q-Q con bandas de confianza para la variable edad")+
-  theme_minimal()
-
-
+wilcox.test (age_years ~ outcome, data = linelist)
 ```
+***TEST DE WILCOXON***
+Imagina que tienes dos grupos de amigos y quieres saber si uno de los grupos es generalmente más alto que el otro. Ahora, no quieres preguntarles a todos cuánto miden, eso llevaría mucho tiempo, ¿verdad? Así que, en lugar de eso, solo preguntas a un par de amigos de cada grupo y comparas sus alturas.
+
+El Test de Wilcoxon es un poco como eso, pero para datos. En lugar de alturas, podrían ser cosas como "¿cuántos dulces come cada niño por semana?" o "¿cuánto tiempo pasan los niños jugando videojuegos?". El test compara los números de los dos grupos y te dice si hay una diferencia grande y significativa entre ellos.
+
+Ahora, ¿por qué no solo usamos el promedio como hacemos con la mayoría de las cosas? Bueno, a veces, los datos no se comportan como esperamos, especialmente si hay muchos números muy altos o muy bajos en un grupo. El Test de Wilcoxon no se preocupa por eso, solo mira los números y ve si hay una diferencia grande sin importar demasiado si algunos son mucho más grandes que otros.
+
+Entonces, en resumen, el Test de Wilcoxon es como comparar grupos de amigos para ver quién come más dulces o juega más videojuegos, pero con números en lugar de personas. Ayuda a ver si hay una diferencia grande y significativa entre los grupos. ¡Es una manera genial de entender quién es diferente sin tener que preguntarle a cada persona del grupo!
+
+```{r}
+ESTE ES NUEVO ARCHIVO
+```
+
+
+
+
+
+
+
 
