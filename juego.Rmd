@@ -1,0 +1,79 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(ggplot2)
+
+# TIRADAS DE DADOS
+generar_tiradas_dados <- function(numero_tiradas, numero_dados = 1, caras_dado = 6) {
+  
+  resultados <- data.frame(matrix(NA, nrow = numero_tiradas, ncol = numero_dados))
+  
+  colnames(resultados) <- paste0("Dado_", 1:numero_dados)
+  
+  for (i in 1:numero_dados) {
+    resultados[, i] <- sample(1:caras_dado, numero_tiradas, replace = TRUE)
+  }
+    return(resultados)
+}
+```
+
+
+
+```{r}
+tiradas <- generar_tiradas_dados(numero_tiradas = 1000, numero_dados = 1, caras_dado = 6)
+```
+
+
+```{r}
+conteo_resultados <- as.data.frame(table(unlist(tiradas)))
+
+# Renombrar las columnas
+colnames(conteo_resultados) <- c("Resultado", "Frecuencia")
+
+# Crear el gráfico de barras con ggplot2
+ggplot(conteo_resultados, aes(x = Resultado, y = Frecuencia)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Conteo de Resultados de Tiradas de Dados",
+       x = "Resultado",
+       y = "Frecuencia")
+
+```
+```{r}
+print(tiradas)
+```
+
+```{r}
+generar_tiradas_dados_normal <- function(numero_tiradas, numero_dados = 1, media = 3.5, desviacion = 1) {
+  
+  resultados <- data.frame(matrix(NA, nrow = numero_tiradas, ncol = numero_dados))
+  
+  # NOMBRAR COLUMNAS
+  colnames(resultados) <- paste0("Dado_", 1:numero_dados)
+  
+  # Realizar las tiradas de dados
+  for (i in 1:numero_dados) {
+    resultados[, i] <- round(rnorm(numero_tiradas, mean = media, sd = desviacion))
+  }
+  
+  return(resultados)
+}
+
+# GENERAMOS TIRADAS CON DISTRIBUCION NORMAL
+tiradas_normal <- generar_tiradas_dados_normal(1000, 1, 3.5, 1)
+
+# Crear el gráfico de conteo con ggplot2
+ggplot(data.frame(Resultado = unlist(tiradas_normal)), aes(x = Resultado)) +
+  geom_bar(fill = "skyblue", alpha = 0.5) +
+  labs(title = "Conteo de Resultados de Tiradas de Dados (Normal)",
+       x = "Resultado",
+       y = "Conteo")
+
+
+```
+```{r}
+print(tiradas)
+```
+
+Para simular los datos que sigan una distribución normal, se usa la función ***rnorm*** en lugar de la función ***sample***. ***rnorm*** genera números aleatorios que siguen una distribución normal con una media y una desviación estándar específicas. 

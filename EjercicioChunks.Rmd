@@ -1,0 +1,66 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r Cargadatos, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+
+# Cargamos los datos
+data(mtcars)
+attach(mtcars)
+
+```
+
+```{r Tablafrecuencias, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+# Tabla de frecuencias
+mi_tabla <- table(cyl)
+mi_tabla
+```
+
+```{r DefFilaColumna, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+# Una fila, dos columnas
+par(mfrow = c(1, 2))
+```
+
+```{r Grafico1, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+# Gráfico de barras de frecuencia absoluta
+barplot(mi_tabla, main = "Frequencia absoluta",
+        col = rainbow(3))
+
+```
+
+```{r Grafico2, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+# Gráfico de barras de frecuencia relativa
+barplot(prop.table(mi_tabla) * 100, main = "Frequencia relativa (%)",
+        col = rainbow(3))
+
+par(mfrow = c(1, 1))
+plot(factor(mtcars$cyl), col = rainbow(3))
+
+
+barp <- barplot(mi_tabla,                     # Guarda los valores de X que
+                main = "Frequencia absoluta", # representan el centro de 
+                col = rainbow(3))             # cada barra           
+
+lines(barp, c(5, 4, 12), type = "o", lwd = 3)
+```
+
+```{r DefinicionesGraficos, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+# Título, etiquetas y colores del gráfico de barras
+
+barplot(mi_tabla,                               # Datos
+        main = "Gráfico de barras",             # Título
+        xlab = "Número de cilindros",           # Etiqueta del eje X
+        ylab = "Frecuencia",                    # Etiqueta del eje Y
+        border = "black",                       # Color del borde de las barras
+        col = c("darkgrey", "darkblue", "red")) # Color para cada barra
+
+```
+
+```{r ComentarioFinEjercicio, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+# Fin del ejercicio de separación en Chunks utilizando el ejemplo_1.R y el método 
+```
+
+

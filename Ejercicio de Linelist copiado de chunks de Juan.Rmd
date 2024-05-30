@@ -1,0 +1,357 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r Diapositiva 8, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+library(pacman)
+pacman::p_load(rio, here, skimr, tidyverse, gtsummary,
+               rstatix, janitor, scales, flextable, epirhandbook)
+ 
+# importar el archivo directamente desde Github
+cleaning_dict <- import("https://github.com/appliedepi/epirhandbook_eng/raw/master/data/case_linelists/cleaning_dict.csv")
+head(cleaning_dict)
+ 
+```
+ 
+```{r Mostrar las tablas, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+linelist <- import("linelist_cleaned.rds")
+head(linelist)
+```
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+skim(linelist)
+```
+
+```{r Diapositiva 11, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+summary(linelist)
+```
+```{r Diapositiva 12, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+summary(linelist$age_years)
+```
+
+```{r Diapositiva 12.2, message=FALSE, warning=FALSE, paged.print=FALSE}
+summary(linelist$age_years)[[2]]
+
+```
+
+```{r Diapositiva 12.3, message=FALSE, warning=FALSE, paged.print=FALSE}
+summary(linelist$age_years)[["1st Qu."]]
+
+```
+
+```{r Diapositiva 13, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+#Primero en consola de Linux instalamos:
+#sudo apt-get install cmake
+#>sudo apt-get install r-cran-rstatix
+#Luego:
+
+linelist <- import("linelist_cleaned.rds")
+linelist %>%
+get_summary_stats(
+age, wt_kg, ht_cm, ct_blood, temp,                  #columnas para calcular
+type="common")                                      #estadisticas resumidas
+
+```
+
+```{r Diapositiva 15, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+linelist %>% 
+  tabyl(age_cat, gender)
+```
+
+```{r Diapositiva 17, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+linelist %>%                   #lista de casos
+    tabyl(age_cat)%>%          #tabular recuentos y proporciones por categoría de edad
+  adorn_pct_formatting()       #convertir proporciones en porcentajes
+```
+
+```{r Diapositiva 18, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+linelist %>%                    
+  tabyl(age_cat, gender) %>%                        #recuentos por edad y sexo
+adorn_totals(where = "row") %>%                 #añadir fila con totales
+adorn_percentages(denominator = "row") %>%      #convertir recuentos en proporciones
+adorn_pct_formatting(digits = 1)                #convertir proporciones en porcentajes
+
+```
+
+```{r Diapositiva 19, message=FALSE, warning=FALSE, paged.print=FALSE}
+#primero llamamos a flextable en la consola Linux, con:
+#sudo apt-get install r-cran-flextable
+
+linelist %>%                    
+  tabyl(age_cat, gender) %>%                    #recuentos por edad y sexo
+adorn_totals(where = "row") %>%                 #añadir fila con totales
+adorn_percentages(denominator = "row") %>%      #convertir recuentos en proporciones
+adorn_pct_formatting(digits = 1) %>%            #convertir proporciones en porcentajes
+  flextable()                                   #llamamos a flextable
+
+```
+
+```{r Diapositiva 20, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+linelist %>%
+  count(hospital) %>% #funcion dplyr
+  adorn_totals()      #funcion janitor
+
+```
+
+```{r Diapositiva 23, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+linelist %>%                #comienza con linelist
+  summarise(n_rows = n())   #devuelve un nuevo dataframe  de resumen 
+```
+
+```{r Diapositiva 24, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+linelist %>%
+  group_by(age_cat) %>%         #agrupa los datos por valores únicos en la columna age_cat
+  summarise(n_rows = n())       #devuelve el número de filas *por grupo
+
+
+```
+
+```{r Diapositiva 24 con rótulos, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+linelist %>%
+  group_by("Categorías de edades" = age_cat) %>%         #agrupa los datos por valores únicos en la columna age_cat
+  summarise("Número de casos" = n())       #devuelve el número de filas *por grupo
+```
+
+```{r Diapositiva 28.2, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+linelist %>%
+  count(age_cat)
+
+
+```
+
+```{r Diapositiva 25, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+linelist %>%
+  count("Categorias de edades"=age_cat, "Brote"=outcome, name = "número")
+
+```
+
+```{r Diapositiva 27, message=FALSE, warning=FALSE, paged.print=FALSE}
+age_summary <- linelist %>%
+  count("Categorias de edades" = age_cat, name = "recuento") %>%
+  mutate(
+  percent = scales::percent(recuento/sum(recuento)))
+  age_summary
+
+```
+
+```{r previo Diapo 28.1, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+
+age_by_outcome <- linelist %>%
+  tabyl(age_cat, outcome, show_na = FALSE)
+chisq.test(age_by_outcome)
+
+```
+
+```{r Previo Diapo 28.2, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+linelist %>%
+  count("Categorias de edades"=age_cat, "Brote"=outcome, name = "número")
+
+```
+
+```{r Diapositiva 28, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+age_by_outcome
+
+```
+
+```{r Diapsitiva 29, message=FALSE, warning=FALSE, paged.print=FALSE}
+linelist %>%
+  count(age_cat, outcome) %>%
+  ggplot()+
+  geom_col(
+    mapping = aes(
+      x=outcome,
+      fill = age_cat,
+      y = n
+    )
+  )
+
+
+
+```
+
+```{r Diapositiva 30, message=FALSE, warning=FALSE, paged.print=FALSE}
+#[17:29] Juan Gutierrez Miranda
+# importa los datos de respuesta de la escala de likert
+
+#likert_data <- rio::import("likert_data.csv")
+
+#linelist %>% 
+
+#sum(response %in% c("Likely", "Very Likely"))
+
+```
+
+```{r Diapositiva 31, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+summary_table <- linelist %>%
+  group_by(hospital) %>%
+  summarise(
+  casos=n(),
+delay_max=max(days_onset_hosp, na.rm=TRUE),
+delay_mean=round(mean(days_onset_hosp, na.rm=TRUE), digits = 2),
+delay_sd=round(sd(days_onset_hosp, na.rm=TRUE), digits = 2),
+delay_3=sum(days_onset_hosp >=3, na.rm=TRUE),
+pct_delay_3=scales::percent(delay_3/casos))
+
+summary_table
+
+```
+
+```{r Diapositiva 32, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+#Estadisticas condicionales
+
+linelist %>%
+  group_by(hospital) %>%
+  summarise(
+    max_temp_fvr = max(temp[fever == "yes"], na.rm = T),
+    max_temp_no = max(temp[fever == "no"], na.rm = T)
+  )
+  
+
+```
+
+```{r Diapositiva 34, message=FALSE, warning=FALSE}
+
+#Pegar valores
+summary_table %>%
+  mutate(delay = str_glue("{delay_mean} ({delay_sd})")) %>%
+  select(-c(delay_mean, delay_sd)) %>%
+  adorn_totals(where="row") %>%
+  select(
+    "Nombre de Hospital" = hospital,
+    "Casos" = casos,
+    "Demora máxima" = delay_max,
+    "Media (Sd)" = delay,
+    "Demora + de 3 días" = delay_3,
+    "% delay + de 3 días" = pct_delay_3
+  )
+
+```
+
+```{r Diapositiva 35.1, message=FALSE, warning=FALSE, paged.print=TRUE}
+# Percentiles
+# obtiene valores de percentil de edad por defecto (0%, 25%, 50%, 75%, 100%)
+linelist %>%
+  summarise(age_percentiles = quantile(age_years, na.rm = TRUE))
+
+
+
+```
+
+```{r Diapositiva 35.2, message=FALSE, warning=FALSE, paged.print=TRUE}
+
+# obtiene valores de percentil de edad especificados manualmente (5%, 50%, 75%, 98%)
+linelist %>%
+  summarise(
+    age_percentiles = quantile(
+      age_years,
+      probs = c(.05, 0.5, 0.75, 0.98),
+      na.rm = TRUE)
+  )
+
+```
+
+```{r Diapositiva 36, message=FALSE, warning=FALSE, paged.print=TRUE}
+
+# obtiene valores de percentil de edad especificados manualmente (5%, 50%, 75% 98%)
+linelist%>%
+  group_by(hospital) %>%
+  summarise(
+    p05 = quantile(age_years, probs = 0.05, na.rm = T),
+    p50 = quantile(age_years, probs = 0.5, na.rm = T),
+    p75 = quantile(age_years, probs = 0.75, na.rm = T),
+    p98 = quantile(age_years, probs = 0.98, na.rm = T),
+  )
+
+```
+
+```{r Diapositiva 37, message=FALSE, warning=FALSE, paged.print=TRUE}
+
+linelist %>%
+  rstatix::get_summary_stats(age, type = "quantile")
+
+```
+
+```{r Diapositiva 38, message=FALSE, warning=FALSE, paged.print=TRUE}
+
+# Resumir datos agregados
+linelist_agg <- linelist %>%
+  drop_na(gender, outcome) %>%
+  count(outcome, gender)
+linelist_agg
+
+```
+
+```{r Diapositiva 39, message=FALSE, warning=FALSE, paged.print=TRUE}
+
+linelist_agg %>%
+  group_by(outcome) %>%
+  summarise(
+    total_cases = sum(n, na.rm = T),
+    male_cases = sum(n[gender == "m"], na.rm = T),
+    female_cases = sum(n[gender == "f"], na.rm = T))
+
+```
+
+```{r Diapositiva 40, message=FALSE, warning=FALSE, paged.print=TRUE}
+
+# across() varias columnas
+linelist %>%
+  group_by(outcome) %>%
+  summarise(across(.cols = c(age_years, temp, wt_kg, ht_cm),
+                   .fns = mean,
+                   na.rm=T))
+
+```
+
+```{r Diiapositiva 40.1, message=FALSE, warning=FALSE, paged.print=TRUE}
+
+# across() varias columnas
+# adicionalmente usamos round para redondear los cálculos a 2 dígitos decimales
+linelist %>%
+  group_by(outcome) %>%
+  summarise(round(across(.cols = c(age_years, temp, wt_kg, ht_cm),
+                   .fns = mean,
+                   na.rm=T), digits = 2))
+
+# round(mean(days_onset_hosp, na.rm=TRUE), digits = 2)
+```
+
+```{r message=FALSE, warning=FALSE, paged.print=TRUE}
+
+```
+
+```{r message=FALSE, warning=FALSE, paged.print=TRUE}
+
+```
+
+```{r message=FALSE, warning=FALSE, paged.print=TRUE}
+
+```
+
+```{r message=FALSE, warning=FALSE, paged.print=TRUE}
+
+```
+
+```{r message=FALSE, warning=FALSE, paged.print=TRUE}
+
+```

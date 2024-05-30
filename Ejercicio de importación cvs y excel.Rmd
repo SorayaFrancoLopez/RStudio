@@ -1,0 +1,50 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+
+
+```{r}
+#carga de xls beauty renombrándolo como beauty2
+
+library(readxl)
+beauty2 <- read_excel("beauty.xls", sheet = "beauty1")
+View(beauty2)
+```
+
+```{r}
+#carga de csv Tabla Persona.csv 
+# (ejemplo mío creado con excel y guardado como cvs)
+# Hubo que usar separado semicolon y local encoding ISO-8859-1 de Windows 
+# para que entendiera los acentos
+
+library(readr)
+Tabla_Personas <- read_delim("Tabla Personas.csv", 
+    delim = ";", escape_double = FALSE, locale = locale(encoding = "ISO-8859-1"), 
+    trim_ws = TRUE)
+View(Tabla_Personas)
+```
+
+```{r}
+#carga de xls beauty renombrándolo como Cleaned_DS_Jobs2
+
+library(readr)
+Cleaned_DS_Jobs2 <- read_csv("Cleaned_DS_Jobs.csv")
+View(Cleaned_DS_Jobs2)
+```
+
+```{r}
+#carga de csv OrderLine_v4.csv"
+# (ejemplo cvs IBM)
+
+library(readr)
+OrderLine_v4 <- read_csv("OrderLine_v4.csv", 
+    col_types = cols(productValue = col_number(), 
+        value = col_number()), locale = locale(encoding = "ISO-8859-1"))
+View(OrderLine_v4)
+```
+
+

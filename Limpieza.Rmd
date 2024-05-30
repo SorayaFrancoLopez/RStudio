@@ -1,0 +1,690 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(pacman)
+pacman::p_load(rio, #Importacion y exportacion de datos.
+               here, #Simplifica la construcción de rutas de archivos.
+               skimr, #Proporciona resumenes de datos rápidos.
+               tidyverse, #Paquetes de CIENCIAS DE DATOS (incluye dplyr, ggplot2 y tidyr) 
+               gtsummary, #Crea tablas de resumen.
+               rstatix, #Análisis estadísticos.
+               janitor, #Facilita la limpieza de datos.
+               scales, #Visualización de datos.
+               flextable, #Creacion de tablas y reportes.
+               epirhandbook #Herramientas de epirhandbook
+               )
+ 
+# importar el archivo directamente desde Github
+cleaning_dict <- import(
+  "https://github.com/appliedepi/epirhandbook_eng/raw/master/data/case_linelists/cleaning_dict.csv"
+  )
+```
+En esta parte cargamos algunas librerias de visualizacion de datos. ***pacman*** es una librería en R que facilita la carga e instalación de otros paquetes. Usarla puede simplificar la administración de paquetes.
+La función p_load de pacman carga los paquetes especificados si ya están instalados; si no, los instala y luego los carga. Aquí se están cargando los siguientes paquetes:
+
+rio: Facilita la importación y exportación de datos.
+here: Simplifica la construcción de rutas de archivos.
+skimr: Proporciona resúmenes de datos rápidos y comprensibles.
+tidyverse: Una colección de paquetes para la ciencia de datos (como dplyr, ggplot2, tidyr, entre otros).
+gtsummary: Facilita la creación de tablas de resumen para la presentación de resultados.
+rstatix: Simplifica el análisis estadístico.
+janitor: Facilita la limpieza de datos.
+scales: Proporciona escalas y transformaciones para la visualización de datos.
+flextable: Permite la creación de tablas flexibles para reportes.
+epirhandbook: Incluye herramientas para la epidemiología aplicadas.
+
+```{r}
+library(viridis)
+library(RColorBrewer) #paletas de colores
+```
+
+```{r entrada, message=TRUE, warning=TRUE, include=FALSE, paged.print=TRUE}
+library(pacman)
+pacman::p_load(rio,
+               here,
+               skimr,
+               tidyverse,
+               gtsummary,
+               rstatix,
+               janitor,
+               scales,
+               flextable)
+```
+
+```{r}
+linelist <- import("linelist_cleaned.rds")
+```
+
+```{r}
+head(cleaning_dict)
+```
+```{r}
+head(linelist)
+```
+```{r DIAPOSITIVA 10, message=TRUE, warning=TRUE, paged.print=TRUE}
+skim(linelist)
+#ESTA FUNCION MUESTRA:
+  #summary
+    #numero columnas, numero de filas, tipos de columnas y frecuencia
+  #nombre de la columna, numeros missing, ratio, minimo, maximo, vacio, numeros unicos, espacios en blanco
+  
+```
+Esta tabla muestra estadísticas descriptivas para varias variables en el conjunto de datos linelist. A continuación, te explico las columnas y el significado de cada una de las estadísticas mostradas:
+
+skim_variable: Nombre de la variable.
+n_missing: Número de valores faltantes (NA) en la variable.
+complete_rate: Proporción de valores completos (no NA) en la variable.
+mean: Media aritmética de la variable.
+sd: Desviación estándar de la variable.
+p0: Percentil 0 (mínimo valor) de la variable.
+p25: Percentil 25 de la variable (primer cuartil).
+p50: Percentil 50 de la variable (mediana).
+p75: Percentil 75 de la variable (tercer cuartil)
+
+**Interpretación de las estadísticas**:
+*generation*: No tiene valores faltantes (n_missing = 0), la media es aproximadamente 16.56, y el valor oscila entre 0 y 20 (de p0 a p75).
+*age y age_years*: Ambas variables tienen 86 valores faltantes, una media cercana a 16 años, y valores distribuidos entre 0 y 23 años.
+*lon (longitud) y lat (latitud)*: No tienen valores faltantes y muestran coordenadas geográficas específicas.
+*wt_kg (peso en kg)*: No tiene valores faltantes, la media es aproximadamente 52.64 kg, pero tiene un valor mínimo negativo (-11), lo cual es extraño y sugiere posibles errores en los datos.
+*ht_cm (altura en cm)*: No tiene valores faltantes, con una media de 124.96 cm y una amplia variabilidad.
+*ct_blood*: No tiene valores faltantes, con una media de 21.21 y valores concentrados alrededor de 20-22.
+*temp (temperatura)*: Tiene 149 valores faltantes, con una media de 38.56 grados y valores típicos de la temperatura corporal.
+*bmi*: No tiene valores faltantes, pero muestra un valor mínimo inusualmente bajo (-1200), lo cual es claramente un error de datos.
+
+
+
+Con la función summary() lo que hacemos es obtener también información, pero esta pertenece a R base y es algo más complicado de leer.
+
+```{r DIAPOSITIVA 11}
+summary(linelist)
+```
+```{r DIAPOSITIVA 12}
+summary(linelist$age_years)[[2]]
+#1st Qu.: 6.00   ESTA ORDEN SELECIONA EL 2 ELEMENTO QUE DEVUELVE LA LISTA DE LA FUNCION SUMMARY
+```
+```{r DIAPO13}
+#ALMACENAR LOS DATOS DE SUMMARY EN UN FORMATO DATAFRAME
+#get_summary_stats( ) pertenece a la libreria rstatix
+linelist %>%
+get_summary_stats(
+age, wt_kg, ht_cm, ct_blood, temp, 
+type = "common")
+```
+```{r DIAPO 14}
+linelist %>%
+  tabyl(age_cat)
+```
+```{r DIAPO 15}
+linelist %>%
+  tabyl(age_cat, gender) %>%
+  adorn_totals(where = "row") %>%
+  adorn_percentages(denominator = "row") %>%
+  adorn_pct_formatting(digits = 2)
+```
+```{r DIAPO17}
+linelist %>%
+  tabyl(age_cat) %>%
+  adorn_pct_formatting()
+```
+```{r DIAPO 18}
+library(flextable)
+
+linelist %>%
+  tabyl(age_cat, gender) %>%
+  adorn_totals(where = "row") %>%
+  adorn_percentages(denominator = "row") %>%
+  adorn_pct_formatting(digits = 1) %>%
+  flextable()
+```
+```{r DIAPO 20}
+linelist %>%
+  count(hospital) %>% #conteo de hospitales
+  adorn_totals()      #totales
+
+```
+```{r}
+table(cleaning_dict)
+```
+```{r DIAPO 23}
+linelist %>%
+  summarise(n_row = n())
+```
+
+la funcion group_by() ayuda a agrupar 
+```{r DIAPOSITIVA 24}
+linelist %>%
+  group_by(age_cat) %>%
+  summarise(n_rows= n())
+```
+```{r DIAPOSITIVA 25}
+linelist %>%
+  count(age_cat)
+```
+```{r}
+linelist %>%
+  count('Categorias de edades' = age_cat, 'Brote' =  outcome, name = "Recuento") #funcion y opciones
+```
+```{r DIAPO 26}
+age_summary <-  linelist %>%
+                count("Categorias de edades" = age_cat, name = "recuento") %>%
+                mutate(percent =scales::percent(recuento / sum(recuento)))
+age_summary
+```
+```{r}
+age_summary %>% 
+  flextable()
+```
+```{r}
+library(ggplot2)
+```
+
+```{r}
+age_summary <- linelist %>%
+  count(age_cat, outcome) %>%
+  mutate(percent = scales::percent(n / sum(n)))
+```
+
+
+```{r}
+ggplot(age_summary, aes(x = outcome, y = n, fill = age_cat)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Distribución de Resultados por Categoría de Edad",
+       x = "Outcome",
+       y = "Count",
+       fill = "AGE_CAT") +
+  theme_minimal()
+```
+
+
+```{r DIAPOSITIVA 29}
+ggplot(age_summary, aes(x = outcome, y = n, fill = age_cat)) +
+  geom_bar(stat = "summary", position = "fill") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(title = "Distribución de Resultados por Categoría de Edad",
+       x = "Outcome",
+       y = "Proporcion",
+       fill = "age_cat") +
+  theme_minimal()
+```
+```{r DIAPOSITIVA 29 BIS}
+linelist %>% 
+  count(age_cat, outcome) %>% 
+  ggplot()+
+  geom_col(
+    mapping = aes(
+      x=outcome,
+      fill = age_cat,
+      y=n
+    )
+  )
+```
+
+
+```{r}
+unique(linelist$outcome)
+
+```
+
+```{r}
+ggplot(linelist, aes(x = outcome, fill = gender)) +
+geom_bar(position = "fill") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(title = "Distribución de OUTCOME según GENERO",
+       x = "Género",
+       y = "Proporción",
+       fill = "Outcome") +
+  theme_minimal()
+```
+```{r}
+pie_data <- linelist %>%
+  group_by(outcome, gender) %>%
+  summarise(n = n()) %>%
+  ungroup()
+
+ggplot(pie_data, aes(x = "", y = n, fill = gender)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar(theta = "y") +
+  facet_wrap(~outcome) +
+  labs(title = "Distribución de Resultados según Género",
+       x = NULL,
+       y = NULL,
+       fill = "Género") +
+  theme_minimal() +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.grid = element_blank(),
+        plot.title = element_text(hjust = 0.5))
+
+```
+```{r DIAPOSITIVA 32}
+summary_table <- linelist %>% 
+  group_by(hospital) %>% 
+  summarise(
+    casos = n(),
+    delay_max = max(days_onset_hosp, na.rm = TRUE),
+    delay_mean = round(mean(days_onset_hosp, na.rm = TRUE), digits = 2),
+    delay_sd = round(sd(days_onset_hosp, na.rm = TRUE), digits = 2),
+    delay_3 = sum(days_onset_hosp <= 3, na.rm = TRUE),
+    pct_delay_3 = percent(delay_3 / casos)
+  )
+summary_table
+```
+```{r}
+ggplot(summary_table, aes(x = 2, y = casos, fill = hospital)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  xlim(0.5, 2.5) + 
+  labs(title = "Distribución de Casos por Hospital",
+       fill = "Hospital") +
+  theme_void() + 
+  geom_text(aes(label = casos), position = position_stack(vjust = 0.5), color = "white")
+ 
+```
+```{r}
+ggplot(summary_table, aes(x = 2, y = casos, fill = hospital)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  xlim(0.5, 2.5) + 
+  labs(title = "Distribución de Casos por Hospital",
+       fill = "Hospital") +
+  theme_void() + 
+  geom_text(aes(label = casos), position = position_stack(vjust = 0.5), color = "white") +
+  scale_fill_viridis(discrete = TRUE)  
+
+```
+
+
+```{r}
+ggplot(summary_table, aes(x = 2, y = casos, fill = hospital)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  xlim(0.5, 2.5) + 
+  labs(title = "Distribución de Casos por Hospital",
+       fill = "Hospital") +
+  theme_void() + 
+  geom_text(aes(label = casos), position = position_stack(vjust = 0.5), color = "white") +
+  scale_fill_manual(values = brewer.pal(n = 8, name = "Dark2"))
+```
+```{r}
+linelist %>% 
+  group_by(hospital) %>% 
+  summarise(
+    max_temp_fvr = max(temp[fever =="yes"], na.rm =T),
+    max_temp_NO = max(temp[fever =="no"], na.rm =T)
+  )
+
+```
+```{r}
+temperature_summary <- linelist %>%
+  group_by(hospital) %>%
+  summarise(
+    max_temp_fvr = max(temp[fever == "yes"], na.rm = TRUE),
+    max_temp_NO = max(temp[fever == "no"], na.rm = TRUE)
+  )
+
+# Convertir los datos a formato largo (tidy) para facilitar la visualización
+temperature_summary_long <- temperature_summary %>%
+  pivot_longer(cols = c(max_temp_fvr, max_temp_NO),
+               names_to = "fever_status",
+               values_to = "max_temperature")
+
+# Gráfico de barras
+ggplot(temperature_summary_long, aes(x = hospital, y = max_temperature, fill = fever_status)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Temperaturas Máximas por Estado de Fiebre y Hospital",
+       x = "Hospital",
+       y = "Temperatura Máxima",
+       fill = "TEMPERATURA") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  
+```
+```{r}
+```
+
+
+```{r}
+#glue lo que hace es unir datos.
+summary_table %>% 
+  mutate(delay =str_glue("{delay_mean} ({delay_sd})")) %>% 
+  select(-c (delay_mean, delay_sd)) %>% 
+  adorn_totals(where ="row") %>% 
+  select(
+    "Hospital" =hospital, 
+    "Casos"=casos,
+    "Demora Maxima" =delay_max,
+    "Media(sd)" = delay,
+    "Demora + 3 dias" = delay_3,
+    "% Demora + 3 dias" =pct_delay_3
+  )
+```
+```{r}
+names(linelist)
+```
+```{r}
+unique(linelist$chills)
+```
+```{r}
+
+# Filtrar el dataframe para incluir solo filas donde el síntoma es "sí"
+symptoms_freq <- linelist %>%
+  summarise(across(c(fever, chills, cough, aches, vomit), ~sum(. == "yes", na.rm = TRUE)))
+
+
+# Convertir a formato largo (tidy)
+symptoms_freq_long <- symptoms_freq %>%
+  pivot_longer(cols = everything(),
+               names_to = "symptom",
+               values_to = "frequency")
+
+# Crear el gráfico de barras
+ggplot(symptoms_freq_long, aes(x = symptom, y = frequency, fill = symptom)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Frecuencia de Síntomas",
+       x = "Síntoma",
+       y = "Frecuencia",
+       fill = "Síntoma") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_fill_viridis(discrete = TRUE)
+
+```
+```{r DIAPOSITIVA 35}
+#PERCENTILES
+
+linelist %>% 
+  summarise(age_percentiles = quantile(age_years, na.rm =TRUE))
+
+```
+
+```{r}
+
+linelist %>% 
+  summarise(
+    age_percentiles = quantile(age_years, probs = c(.05, 0.5, 0.75, 0.980) , na.rm =TRUE))
+
+
+```
+
+```{r DIAPOSITIVA 36}
+linelist %>%
+  group_by(hospital) %>% 
+  summarise(
+    p05 = quantile(age_years, probs = 0.05, na.rm = TRUE),
+    p50 = quantile(age_years, probs = 0.50, na.rm = TRUE),
+    p75 = quantile(age_years, probs = 0.75, na.rm = TRUE),
+    p98 = quantile(age_years, probs = 0.98, na.rm = TRUE)
+  )
+```
+```{r DIAPOSITIVA 37}
+linelist %>% 
+  rstatix::get_summary_stats(age, type = "quantile")
+```
+
+```{r depo38}
+linelist_agg <-  linelist %>% 
+  drop_na(gender, outcome) %>% 
+  count(outcome, gender)
+
+linelist_agg
+```
+```{r depo39}
+linelist_agg %>% 
+  group_by (outcome) %>% 
+  summarise(
+    total_cases = sum(n, na.rm=T),
+    male_cases = sum(n[gender == "m"], na.rm=T),
+    female_cases = sum(n[gender == "f"], na.rm=T)
+    
+  )
+```
+```{r DIAPOSITIVA 40}
+linelist %>% 
+  group_by(outcome) %>% 
+  summarise(round(across(.cols = c(age_years, temp, wt_kg, ht_cm),
+                    .fns = mean,
+                    na.rm=T), digits = 2))
+```
+```{r DIAPOSITIVA 41}
+linelist %>% 
+  group_by(outcome) %>% 
+  summarise(round(across(.cols = c(age_years, temp, wt_kg, ht_cm),
+                   .fns = list("mean" = mean, "sd" = sd),
+                   na.rm=T                   ), digits = 3))
+```
+
+```{r DIAPOSITIVA 43}
+linelist %>% 
+  group_by(outcome) %>% 
+  summarise(round(across(
+    .cols = where(is.numeric),
+    .fns = mean,
+    na.rm =T ), digits = 2))
+    
+
+```
+```{r DIAPOSITIVA 44}
+age_by_outcome <- linelist %>% 
+  group_by(outcome) %>% 
+  count(age_cat) %>% 
+  mutate(percent = scales::percent(n/sum(n)))
+age_by_outcome
+```
+
+```{r DIAPOSITIVA 45}
+age_by_outcome %>% 
+  select(-percent) %>% 
+  pivot_wider(names_from = age_cat, values_from = n)
+```
+
+```{r DIAPOSITIVA 46}
+linelist %>% 
+  group_by(gender) %>% 
+  summarise(
+    know_outcome = sum(!is.na(outcome)),
+    n_death = sum(outcome == "Death", na.rm =T),
+    n_recover = sum(outcome == "Recover", na.rm=T),
+      ) %>% 
+adorn_totals() %>% 
+  adorn_percentages("col") %>% 
+  adorn_pct_formatting() %>% 
+  adorn_ns(position= "front")
+```
+
+```{r DIAPOSITIVA 47}
+by_hospital <- linelist %>% 
+  filter(!is.na(outcome) & hospital != "Missing") %>% 
+  group_by(hospital, outcome) %>% 
+  summarise(
+    N= n(),
+    ct_value = median(ct_blood, na.rm=T)
+  )
+by_hospital
+```
+
+```{r DIAPOSITVA 48}
+totals <-  linelist %>% 
+  filter(!is.na(outcome) & hospital != "Missing") %>% 
+  group_by(outcome) %>% 
+  summarise(
+    N= n(),
+    ct_value = median(ct_blood, na.rm=T))
+totals
+```
+
+```{r DIAPOSITIVA 49}
+table_long <-  bind_rows(by_hospital, totals) %>% 
+  mutate(hospital = replace_na(hospital, "Total"))
+
+table_long
+```
+
+```{r DIAPOSITIVA 50}
+table_long %>% 
+  mutate(hospital = replace_na(hospital, "Total")) %>% 
+  pivot_wider(
+    values_from = c(ct_value, N),
+    names_from = outcome
+  ) %>% 
+  mutate(
+    N_Known = N_Death + N_Recover,
+    Pct_Death = percent(N_Death / N_Known, 0.1),
+    Pct_Recover = percent(N_Recover / N_Known, 0.1)
+  ) %>% 
+  select(
+    hospital, N_Known,
+    N_Recover, Pct_Recover, ct_value_Recover,
+    N_Death, Pct_Death, ct_value_Death
+  ) %>% 
+  arrange(N_Known)
+
+```
+
+```{r DIAPOSITIVA 51}
+table(linelist$outcome, useNA = "always")
+```
+
+```{r DIAPOSITIVA 52}
+age_by_outcome <- table(linelist$age_cat, linelist$outcome, useNA = "always")
+age_by_outcome
+```
+```{r DIAPOSITIVA 53}
+prop.table(age_by_outcome, 1) %>% round(2)
+```
+
+```{r}
+addmargins(age_by_outcome)
+```
+
+```{r DIAPOSITIVA 55}
+table( fct_explicit_na(linelist$age_cat), fct_explicit_na(linelist$outcome)) %>% 
+  addmargins() %>% 
+  as.data.frame.matrix() %>% 
+  tibble::rownames_to_column(var = "Age Category") %>% 
+  flextable::flextable()
+```
+
+```{r}
+# Configurar el diseño de la disposición de gráficos
+par(mfrow = c(3, 2))
+
+# Gráfico 1: Gráfico de líneas simple
+x <- 1:10
+y <- rnorm(10)
+plot(x, y, type = "l", col = "blue", main = "Gráfico de Líneas", xlab = "X", ylab = "Y")
+
+# Gráfico 2: Gráfico de dispersión simple
+x <- rnorm(50)
+y <- rnorm(50)
+plot(x, y, col = "red", main = "Gráfico de Dispersión", xlab = "Variable X", ylab = "Variable Y")
+
+# Gráfico 3: Histograma simple
+data <- rnorm(100)
+hist(data, col = "green", main = "Histograma", xlab = "Valores", ylab = "Frecuencia")
+
+# Gráfico 4: Gráfico de barras simple
+categories <- c("A", "B", "C", "D")
+counts <- c(5, 10, 15, 20)
+barplot(counts, names.arg = categories, col = "purple", main = "Gráfico de Barras", xlab = "Categorías", ylab = "Frecuencia")
+
+# Gráfico 5: Gráfico de cajas (boxplot) simple
+data1 <- rnorm(50)
+data2 <- rnorm(50, mean = 3)
+boxplot(data1, data2, names = c("Grupo 1", "Grupo 2"), col = c("orange", "cyan"), main = "Gráfico de Cajas", ylab = "Valores")
+
+# Gráfico 6: Gráfico de sectores (pie chart) simple
+slices <- c(10, 20, 30, 40)
+labels <- c("A", "B", "C", "D")
+pie(slices, labels = labels, col = c("red", "yellow", "blue", "green"), main = "Gráfico de Sectores")
+
+# Restaurar la configuración original de los gráficos
+par(mfrow = c(1, 1))
+
+```
+```{r}
+# Ejemplo en R para visualizar el TLC
+set.seed(123)
+
+# Generar una población con distribución uniforme
+population <- runif(10000, min = 0, max = 100)
+
+# Función para calcular el promedio de una muestra
+sample_means <- function(sample_size, n_samples) {
+  means <- numeric(n_samples)
+  for (i in 1:n_samples) {
+    sample <- sample(population, size = sample_size, replace = TRUE)
+    means[i] <- mean(sample)
+  }
+  return(means)
+}
+
+# Calcular promedios de muestras para diferentes tamaños de muestra
+means_10 <- sample_means(10, 1000)
+means_30 <- sample_means(30, 1000)
+means_100 <- sample_means(100, 1000)
+
+# Graficar los histogramas
+par(mfrow = c(3, 1))
+hist(means_10, main = "Distribución de Promedios (n=10)", xlab = "Promedio", col = "blue", breaks = 20)
+hist(means_30, main = "Distribución de Promedios (n=30)", xlab = "Promedio", col = "green", breaks = 20)
+hist(means_100, main = "Distribución de Promedios (n=100)", xlab = "Promedio", col = "red", breaks = 20)
+
+```
+
+```{r}
+# Cargar librerías necesarias
+library(ggplot2)
+library(MASS)
+
+# Simular datos de una distribución normal bivariada
+set.seed(0)
+n <- 10000
+mean <- c(0, 0)
+cov <- matrix(c(2, 0.4, 0.4, 0.2), nrow = 2)
+data <- mvrnorm(n, mean, cov)
+df <- data.frame(x = data[, 1], y = data[, 2])
+
+# Crear el gráfico de dispersión con densidad de puntos
+scatter_plot <- ggplot(df, aes(x = x, y = y)) +
+  geom_point(alpha = 0.15, size = 0.5, color = "black") +
+  geom_bin2d(bins = 50, alpha = 0.5) +
+  stat_density_2d(aes(fill = ..level..), geom = "polygon", color = "white") +
+  scale_fill_distiller(palette = "Blues", direction = 1) +
+  theme_minimal() +
+  theme(aspect.ratio = 1)
+
+# Crear histogramas marginales
+hist_top <- ggplot(df, aes(x)) +
+  geom_histogram(bins = 30, fill = "steelblue", alpha = 0.7) +
+  theme_minimal() +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+hist_right <- ggplot(df, aes(y)) +
+  geom_histogram(bins = 30, fill = "steelblue", alpha = 0.7) +
+  coord_flip() +
+  theme_minimal() +
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+
+# Combinar los gráficos
+combined_plot <- ggplot() +
+  geom_blank() +
+  annotation_custom(ggplotGrob(scatter_plot), xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
+  annotation_custom(ggplotGrob(hist_top), xmin = -Inf, xmax = Inf, ymin = 0.6, ymax = 1) +
+  annotation_custom(ggplotGrob(hist_right), xmin = 0.6, xmax = 1, ymin = -Inf, ymax = Inf) +
+  theme_void()
+
+# Mostrar el gráfico combinado
+print(combined_plot)
+
+
+```
+
+
