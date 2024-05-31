@@ -185,13 +185,100 @@ Ahora, ¿por qué no solo usamos el promedio como hacemos con la mayoría de las
 Entonces, en resumen, el Test de Wilcoxon es como comparar grupos de amigos para ver quién come más dulces o juega más videojuegos, pero con números en lugar de personas. Ayuda a ver si hay una diferencia grande y significativa entre los grupos. ¡Es una manera genial de entender quién es diferente sin tener que preguntarle a cada persona del grupo!
 
 ```{r}
-ESTE ES NUEVO ARCHIVO
+# Crear un dataframe con las notas de matemáticas para tres grupos de alumnos (A, B y C)
+alumnos_matematicas <- data_frame(
+  A = c(7.8, 8.5, 9.2, 6.5, 7.0, 4.2, 2.2),  # Notas de matemáticas para el grupo A
+  B = c(8.0, 7.5, 8.8, 7.2, 6.9, 10.0, 4.7),  # Notas de matemáticas para el grupo B
+  C = c(9.0, 8.2, 7.6, 8.3, 7.8, 5.0, 4.9)   # Notas de matemáticas para el grupo C
+)
+
+print(alumnos_matematicas)
+```
+
+```{r}
+resultado_kruskal <- kruskal.test(alumnos_matematicas)
+
+# Imprimir el resultado del test
+print(resultado_kruskal)
 ```
 
 
+```{r}
+linelist %>% 
+  rstatix::get_summary_stats(age, temp)
+```
+Determinar si una muestra es representativa de la población es fundamental en estadística. Aquí hay algunos pasos y consideraciones que pueden ayudarte a determinar si una muestra es representativa de la población:
+
+Criterios de selección de la muestra: Asegúrate de que la muestra se seleccione de manera aleatoria y representativa de la población en cuestión. Esto significa que cada elemento de la población tiene una oportunidad conocida de ser seleccionado en la muestra. Si la muestra se selecciona de manera sesgada o no aleatoria, es menos probable que sea representativa de la población.
+
+Tamaño de la muestra: Cuanto mayor sea el tamaño de la muestra en relación con el tamaño de la población, mayor será la probabilidad de que la muestra sea representativa. Sin embargo, un tamaño de muestra excesivamente grande puede ser innecesario y costoso.
+
+Características demográficas: Verifica que las características demográficas clave de la muestra sean similares a las de la población. Por ejemplo, si estás realizando un estudio sobre la edad, el género o el nivel educativo de la población, asegúrate de que la muestra refleje estas características.
+
+Muestreo estratificado: Si la población tiene subgrupos importantes, considera utilizar el muestreo estratificado para garantizar que todos los subgrupos estén representados adecuadamente en la muestra.
+
+Conocimiento del contexto: Comprende el contexto y las características específicas de la población en estudio. Esto puede ayudarte a determinar si la muestra captura adecuadamente la variabilidad y la diversidad presentes en la población.
+
+Análisis de sesgos potenciales: Evalúa posibles sesgos en la muestra, como el sesgo de selección, el sesgo de respuesta o el sesgo de no respuesta. Estos sesgos pueden distorsionar la representatividad de la muestra.
+
+Validación de resultados: Una vez que se haya recopilado la muestra y se hayan realizado análisis estadísticos, verifica si los resultados son coherentes con lo que se conoce sobre la población en general. Los resultados inesperados pueden indicar problemas con la representatividad de la muestra.
+
+```{r}
+linelist %>% 
+  group_by(hospital) %>% 
+  rstatix::get_summary_stats(age, temp, type = "common") %>% 
+ flextable() %>%
+  bg(bg = "m", part = "header") %>%
+  color(color = "white", part = "header")
+```
+
+```{r}
+colnames(linelist)
+```
+
+```{r}
+library(dplyr)
+library(flextable)
+library(rstatix)
+
+linelist %>%
+  group_by(hospital) %>%
+  rstatix::get_summary_stats(age, temp, type = "common") %>%
+  flextable() %>%
+  bg(bg = "midnightblue", part = "header") %>%
+  color(color = "white", part = "header")
 
 
 
+```
 
 
+```{r}
+library(dplyr)
+library(flextable)
+library(rstatix)
+
+
+my_color_fun <- function(x) {
+  if_else(x > 70, "red", if_else(x == 0, "#2A9931", "black"))
+}
+
+summary_stats <- linelist %>%
+  group_by(hospital) %>%
+  rstatix::get_summary_stats(age, temp, type = "common") %>%
+  as.data.frame()
+
+flex_table <- flextable(summary_stats) %>%
+  bg(bg = "#134516", part = "header") %>%
+  color(color = "white", part = "header") 
+
+flex_table <- flex_table %>%
+  color(j = c("min", "max"), color = my_color_fun)
+
+
+flex_table <- flex_table %>%
+  bg(i = ~ci < 1, j = "ci", bg = "#2A9931")
+
+flex_table  
+```
 
